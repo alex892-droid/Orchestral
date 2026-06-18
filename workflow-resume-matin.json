@@ -104,13 +104,18 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.notifymyecho.com/v1/NotifyMe",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ notification: $json.content[0].text, accessCode: $vars.NOTIFYME_CODE }) }}",
+        "url": "https://api-v2.voicemonkey.io/announcement",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "token", "value": "REMPLACER_PAR_TON_TOKEN_VOICEMONKEY" },
+            { "name": "device", "value": "REMPLACER_PAR_TON_DEVICE_VOICEMONKEY" },
+            { "name": "text", "value": "={{ $json.content[0].text }}" }
+          ]
+        },
         "options": {}
       },
-      "id": "notifyme",
+      "id": "voicemonkey",
       "name": "Annoncer sur Alexa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
