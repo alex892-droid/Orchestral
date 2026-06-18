@@ -79,4 +79,3 @@ largement suffisant pour resumer des mails).
   -> Notify Me. Pas d'auth, pas de quota.
 - **LinkedIn** : pas d'API officielle pour la messagerie. A garder en dernier,
   et plutot en alerte legere qu'en lecture des messages (risque de blocage du compte).
->>>>>>> 3f5551e (Socle hub n8n : Docker + Caddy + workflow resume du matin)
