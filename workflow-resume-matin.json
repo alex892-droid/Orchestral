@@ -16,7 +16,10 @@
       "name": "Tous les jours a 7h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [-200, 300]
+      "position": [
+        -200,
+        300
+      ]
     },
     {
       "parameters": {
@@ -32,34 +35,47 @@
       "name": "Mails des dernieres 24h",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [40, 300],
+      "position": [
+        40,
+        300
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "REMPLACER",
           "name": "Gmail account"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "// Combine agenda du jour + mails 24h pour Claude.\nconst mails = $('Mails des dernieres 24h').all();\nconst events = $('Agenda du jour').all();\nif (mails.length === 0 && events.length === 0) {\n  return [{ json: { prompt: null, count: 0 } }];\n}\nconst lignesMails = mails.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst lignesAgenda = events.map((it) => {\n  const e = it.json;\n  const debut = (e.start && (e.start.dateTime || e.start.date)) || '';\n  const heure = e.start && e.start.dateTime ? debut.toString().slice(11, 16) : 'journee';\n  const titre = e.summary || '(sans titre)';\n  const lieu = e.location ? ` (${e.location})` : '';\n  return `- ${heure} : ${titre}${lieu}`;\n}).join('\\n');\nconst prompt = `Tu es l'assistant matinal d'Alexis. Redige un briefing vocal court en francais, lu a voix haute par une enceinte : pas de markdown, pas de listes a puces, des phrases simples.\\n\\nCommence par l'agenda du jour : annonce les rendez-vous d'aujourd'hui dans l'ordre, avec l'heure et l'intitule. S'il n'y a aucun rendez-vous, dis-le en une phrase.\\n\\nEnsuite les mails. Ne retiens QUE ce qui compte vraiment : les messages ecrits par de vraies personnes qui s'adressent a lui (surtout ceux qui attendent une reponse) ; ce qui demande une action ou a une echeance ; les sujets pro, opportunites, contacts reseau, candidatures, clients ; l'argent (factures, paiements, banque, abonnements).\\n\\nIGNORE totalement : les codes de securite ou 2FA et notifications de connexion ; les newsletters, promotions et alertes emploi automatiques ; les accuses de reception et confirmations automatiques ; les notifications de reseaux sociaux. Si aucun mail n'est notable, dis-le en une phrase, sans meubler.\\n\\nAgenda du jour:\\n${lignesAgenda || 'Aucun rendez-vous.'}\\n\\nMails (24h):\\n${lignesMails || 'Aucun mail.'}`;\nreturn [{ json: { prompt, count: mails.length + events.length } }];"
+        "jsCode": "// Combine meteo + agenda + mails 24h pour Claude.\nconst mails = $('Mails des dernieres 24h').all().filter(it => it.json && (it.json.id || it.json.snippet || it.json.subject || it.json.From || it.json.from));\nconst events = $('Agenda du jour').all().filter(it => it.json && (it.json.start || it.json.id || it.json.summary));\nconst lignesMails = mails.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst lignesAgenda = events.map((it) => {\n  const e = it.json;\n  const debut = (e.start && (e.start.dateTime || e.start.date)) || '';\n  const heure = e.start && e.start.dateTime ? debut.toString().slice(11, 16) : 'journee';\n  const titre = e.summary || '(sans titre)';\n  const lieu = e.location ? ` (${e.location})` : '';\n  return `- ${heure} : ${titre}${lieu}`;\n}).join('\\n');\nconst codes = {0:'ciel degage',1:'plutot ensoleille',2:'partiellement nuageux',3:'couvert',45:'brouillard',48:'brouillard givrant',51:'bruine legere',53:'bruine',55:'bruine forte',61:'pluie faible',63:'pluie',65:'pluie forte',66:'pluie verglacante',67:'pluie verglacante',71:'neige faible',73:'neige',75:'neige forte',77:'neige',80:'averses',81:'averses',82:'fortes averses',85:'averses de neige',86:'averses de neige',95:'orage',96:'orage avec grele',99:'orage avec grele'};\nconst md = $('Meteo du jour').first()?.json?.daily;\nlet meteo = 'indisponible';\nif (md) {\n  const desc = codes[md.weather_code?.[0]] || 'temps variable';\n  const tmin = Math.round(md.temperature_2m_min?.[0]);\n  const tmax = Math.round(md.temperature_2m_max?.[0]);\n  const pluie = md.precipitation_probability_max?.[0];\n  meteo = `${desc}, de ${tmin} a ${tmax} degres, risque de pluie ${pluie}%`;\n}\nif (mails.length === 0 && events.length === 0) {\n  const p = `Tu es l'assistant matinal d'Alexis. Dis bonjour, donne la meteo du jour a Strasbourg en une phrase (${meteo}), puis precise qu'il n'y a aucun rendez-vous ni mail notable ce matin. Court, en francais, pour une enceinte vocale, sans markdown.`;\n  return [{ json: { prompt: p, count: 1 } }];\n}\nconst prompt = `Tu es l'assistant matinal d'Alexis. Redige un briefing vocal court en francais, lu a voix haute par une enceinte : pas de markdown, pas de listes a puces, des phrases simples.\n\nDonne d'abord la meteo du jour a Strasbourg en une phrase. Puis l'agenda : annonce les rendez-vous d'aujourd'hui dans l'ordre, avec l'heure et l'intitule (s'il n'y en a aucun, dis-le). Enfin les mails importants.\n\nPour les mails, ne retiens QUE ce qui compte vraiment : vraies personnes qui s'adressent a lui (surtout si une reponse est attendue), actions ou echeances, sujets pro/opportunites/reseau/candidatures/clients, argent (factures, paiements, banque). IGNORE : codes 2FA et notifications de connexion, newsletters/promos/alertes emploi automatiques, accuses de reception, reseaux sociaux. Si aucun mail n'est notable, dis-le en une phrase.\n\nMeteo du jour (Strasbourg):\n${meteo}\n\nAgenda du jour:\n${lignesAgenda || 'Aucun rendez-vous.'}\n\nMails (24h):\n${lignesMails || 'Aucun mail.'}`;\nreturn [{ json: { prompt, count: mails.length + events.length } }];\n"
       },
       "id": "build-prompt",
       "name": "Construire le prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [260, 300]
+      "position": [
+        260,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "version": 2 },
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
           "combinator": "and",
           "conditions": [
             {
               "leftValue": "={{ $json.count }}",
               "rightValue": 0,
-              "operator": { "type": "number", "operation": "gt" }
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
             }
           ]
         },
@@ -69,7 +85,10 @@
       "name": "Au moins un mail ?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [480, 300]
+      "position": [
+        480,
+        300
+      ]
     },
     {
       "parameters": {
@@ -80,8 +99,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "anthropic-version", "value": "2023-06-01" },
-            { "name": "content-type", "value": "application/json" }
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -93,7 +118,10 @@
       "name": "Resume via Claude",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [700, 200],
+      "position": [
+        700,
+        200
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "REMPLACER",
@@ -114,12 +142,20 @@
       "name": "Annoncer sur Alexa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [920, 200]
+      "position": [
+        920,
+        200
+      ]
     },
     {
       "parameters": {
         "operation": "getAll",
-        "calendar": { "__rl": true, "value": "primary", "mode": "list", "cachedResultName": "primary" },
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "primary"
+        },
         "returnAll": true,
         "options": {
           "timeMin": "={{ $now.startOf('day').toISO() }}",
@@ -132,37 +168,139 @@
       "name": "Agenda du jour",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
-      "position": [260, 480],
+      "position": [
+        260,
+        480
+      ],
       "credentials": {
         "googleCalendarOAuth2Api": {
           "id": "REMPLACER",
           "name": "Google Calendar account"
         }
-      }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "48.5734"
+            },
+            {
+              "name": "longitude",
+              "value": "7.7521"
+            },
+            {
+              "name": "daily",
+              "value": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+            },
+            {
+              "name": "timezone",
+              "value": "Europe/Paris"
+            },
+            {
+              "name": "forecast_days",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-2222-4333-8444-555566667777",
+      "name": "Meteo du jour",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        320
+      ]
     }
   ],
   "connections": {
     "Tous les jours a 7h": {
-      "main": [[{ "node": "Mails des dernieres 24h", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Mails des dernieres 24h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Mails des dernieres 24h": {
-      "main": [[{ "node": "Agenda du jour", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Agenda du jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Agenda du jour": {
-      "main": [[{ "node": "Construire le prompt", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Meteo du jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Construire le prompt": {
-      "main": [[{ "node": "Au moins un mail ?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Au moins un mail ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Au moins un mail ?": {
       "main": [
-        [{ "node": "Resume via Claude", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Resume via Claude",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
     "Resume via Claude": {
-      "main": [[{ "node": "Annoncer sur Alexa", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Annoncer sur Alexa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meteo du jour": {
+      "main": [
+        [
+          {
+            "node": "Construire le prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": { "executionOrder": "v1" }
+  "settings": {
+    "executionOrder": "v1"
+  }
 }
