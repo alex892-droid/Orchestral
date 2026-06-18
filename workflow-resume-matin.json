@@ -42,7 +42,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Concatene tous les mails recus en un seul bloc texte pour Claude.\nconst items = $input.all();\nif (items.length === 0) {\n  return [{ json: { prompt: null, count: 0 } }];\n}\nconst lignes = items.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst prompt = `Tu es l'assistant matinal d'Alexis. Voici les mails recus dans les dernieres 24h. Redige un resume vocal court en francais, lu a voix haute par une enceinte : pas de markdown, pas de listes a puces, des phrases simples.\\n\\nNe retiens QUE ce qui compte vraiment : les messages ecrits par de vraies personnes qui s'adressent a lui (surtout ceux qui attendent une reponse) ; ce qui demande une action ou a une echeance (rdv, paiement, document a fournir, reponse attendue) ; les sujets pro, opportunites, contacts reseau, candidatures, clients ; l'argent (factures, paiements, banque, abonnements).\\n\\nIGNORE totalement, n'en parle pas du tout : les codes de securite ou 2FA et les notifications de connexion ; les newsletters, promotions et alertes emploi automatiques ; les accuses de reception et confirmations automatiques ; les notifications de reseaux sociaux.\\n\\nCommence par le nombre de mails vraiment importants (pas le total recu). Presente-les du plus important au moins important, en disant qui ecrit et ce qui est attendu de lui. Si rien n'est notable ce matin, dis-le simplement en une phrase, sans meubler.\\n\\nMails:\\n${lignes}`;\nreturn [{ json: { prompt, count: items.length } }];"
+        "jsCode": "// Combine agenda du jour + mails 24h pour Claude.\nconst mails = $('Mails des dernieres 24h').all();\nconst events = $('Agenda du jour').all();\nif (mails.length === 0 && events.length === 0) {\n  return [{ json: { prompt: null, count: 0 } }];\n}\nconst lignesMails = mails.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst lignesAgenda = events.map((it) => {\n  const e = it.json;\n  const debut = (e.start && (e.start.dateTime || e.start.date)) || '';\n  const heure = e.start && e.start.dateTime ? debut.toString().slice(11, 16) : 'journee';\n  const titre = e.summary || '(sans titre)';\n  const lieu = e.location ? ` (${e.location})` : '';\n  return `- ${heure} : ${titre}${lieu}`;\n}).join('\\n');\nconst prompt = `Tu es l'assistant matinal d'Alexis. Redige un briefing vocal court en francais, lu a voix haute par une enceinte : pas de markdown, pas de listes a puces, des phrases simples.\\n\\nCommence par l'agenda du jour : annonce les rendez-vous d'aujourd'hui dans l'ordre, avec l'heure et l'intitule. S'il n'y a aucun rendez-vous, dis-le en une phrase.\\n\\nEnsuite les mails. Ne retiens QUE ce qui compte vraiment : les messages ecrits par de vraies personnes qui s'adressent a lui (surtout ceux qui attendent une reponse) ; ce qui demande une action ou a une echeance ; les sujets pro, opportunites, contacts reseau, candidatures, clients ; l'argent (factures, paiements, banque, abonnements).\\n\\nIGNORE totalement : les codes de securite ou 2FA et notifications de connexion ; les newsletters, promotions et alertes emploi automatiques ; les accuses de reception et confirmations automatiques ; les notifications de reseaux sociaux. Si aucun mail n'est notable, dis-le en une phrase, sans meubler.\\n\\nAgenda du jour:\\n${lignesAgenda || 'Aucun rendez-vous.'}\\n\\nMails (24h):\\n${lignesMails || 'Aucun mail.'}`;\nreturn [{ json: { prompt, count: mails.length + events.length } }];"
       },
       "id": "build-prompt",
       "name": "Construire le prompt",
@@ -115,6 +115,30 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [920, 200]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": { "__rl": true, "value": "primary", "mode": "list", "cachedResultName": "primary" },
+        "returnAll": true,
+        "options": {
+          "timeMin": "={{ $now.startOf('day').toISO() }}",
+          "timeMax": "={{ $now.endOf('day').toISO() }}",
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "id": "gcal",
+      "name": "Agenda du jour",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [260, 480],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "REMPLACER",
+          "name": "Google Calendar account"
+        }
+      }
     }
   ],
   "connections": {
@@ -122,6 +146,9 @@
       "main": [[{ "node": "Mails des dernieres 24h", "type": "main", "index": 0 }]]
     },
     "Mails des dernieres 24h": {
+      "main": [[{ "node": "Agenda du jour", "type": "main", "index": 0 }]]
+    },
+    "Agenda du jour": {
       "main": [[{ "node": "Construire le prompt", "type": "main", "index": 0 }]]
     },
     "Construire le prompt": {
