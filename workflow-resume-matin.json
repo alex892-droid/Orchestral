@@ -24,7 +24,7 @@
         "operation": "getAll",
         "returnAll": true,
         "filters": {
-          "q": "newer_than:1d in:inbox -category:promotions -category:social"
+          "q": "newer_than:1d in:inbox -category:promotions -category:social -category:forums"
         },
         "options": {}
       },
