@@ -1,0 +1,55 @@
+{
+  "id": "YtMcFlyVideos001",
+  "name": "Nouvelles videos YouTube",
+  "nodes": [
+    {
+      "parameters": {
+        "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UCDPK_MTu3uTUFJXRVcTJcEw",
+        "pollTimes": {
+          "item": [
+            { "mode": "everyHour" }
+          ]
+        }
+      },
+      "id": "rss-mcfly",
+      "name": "McFly et Carlito (RSS)",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construit le texte annonce a partir de la nouvelle video.\nconst titre = ($json.title || 'nouvelle video').toString();\nconst chaine = 'McFly et Carlito';\nconst speech = `Nouvelle video de ${chaine} : ${titre}`;\nreturn [{ json: { speech } }];"
+      },
+      "id": "msg",
+      "name": "Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-v3.voicemonkey.io/announce",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ token: 'REMPLACER_PAR_TON_TOKEN_VOICEMONKEY', device: 'living-room-echo-cletz', speech: $json.speech }) }}",
+        "options": {}
+      },
+      "id": "vm",
+      "name": "Annoncer sur Alexa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0]
+    }
+  ],
+  "connections": {
+    "McFly et Carlito (RSS)": {
+      "main": [[{ "node": "Message", "type": "main", "index": 0 }]]
+    },
+    "Message": {
+      "main": [[{ "node": "Annoncer sur Alexa", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}
