@@ -1,0 +1,6 @@
+# Caddy genere et renouvelle automatiquement le certificat Let's Encrypt
+# pour ce domaine (ici un sous-domaine DuckDNS). Le port 80 doit etre
+# joignable depuis Internet pour le challenge ACME.
+{$N8N_HOST} {
+	reverse_proxy n8n:5678
+}

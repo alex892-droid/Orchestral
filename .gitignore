@@ -1,0 +1,5 @@
+# Secrets : ne JAMAIS committer le .env reel (cle de chiffrement, domaine)
+.env
+
+# Donnees runtime locales eventuelles
+*.log
