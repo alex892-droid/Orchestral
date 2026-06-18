@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom' xmlns:apps='http://schemas.google.com/apps/2006'>
+  <title>Orchestral - Filtres Gmail</title>
+
+  <!-- Alertes emploi (LinkedIn, Indeed) + digests LinkedIn -> Veille, archive -->
+  <entry>
+    <category term='filter'></category>
+    <title>Veille - alertes emploi</title>
+    <content></content>
+    <apps:property name='from' value='jobalerts-noreply@linkedin.com OR messages-noreply@linkedin.com OR no-reply@indeed.com'/>
+    <apps:property name='label' value='📰 Veille'/>
+    <apps:property name='shouldArchive' value='true'/>
+    <apps:property name='shouldMarkAsRead' value='true'/>
+  </entry>
+
+  <!-- Newsletters / marketing -> Veille, archive -->
+  <entry>
+    <category term='filter'></category>
+    <title>Veille - newsletters</title>
+    <content></content>
+    <apps:property name='from' value='newsletter@formspree.io OR epidemicsound.com OR codeur.com OR malt.com OR duolingo.com OR news.meshy.ai'/>
+    <apps:property name='label' value='📰 Veille'/>
+    <apps:property name='shouldArchive' value='true'/>
+    <apps:property name='shouldMarkAsRead' value='true'/>
+  </entry>
+
+  <!-- Promos commerce -> Veille, archive -->
+  <entry>
+    <category term='filter'></category>
+    <title>Veille - promos commerce</title>
+    <content></content>
+    <apps:property name='from' value='email.armandthiery.fr OR email.supermarchesmatch.fr OR mail.sncf-connect.com'/>
+    <apps:property name='label' value='📰 Veille'/>
+    <apps:property name='shouldArchive' value='true'/>
+    <apps:property name='shouldMarkAsRead' value='true'/>
+  </entry>
+
+  <!-- Recus / factures par expediteur -> Finance, etoile, garde en boite -->
+  <entry>
+    <category term='filter'></category>
+    <title>Finance - recus expediteurs</title>
+    <content></content>
+    <apps:property name='from' value='stripe.com OR mail.anthropic.com OR suno.com OR binance.com'/>
+    <apps:property name='label' value='💰 Finance'/>
+    <apps:property name='shouldStar' value='true'/>
+  </entry>
+
+  <!-- Recus / factures par objet -> Finance, etoile, garde en boite -->
+  <entry>
+    <category term='filter'></category>
+    <title>Finance - recus par objet</title>
+    <content></content>
+    <apps:property name='subject' value='facture OR invoice OR reçu OR receipt OR paiement'/>
+    <apps:property name='label' value='💰 Finance'/>
+    <apps:property name='shouldStar' value='true'/>
+  </entry>
+
+  <!-- Commandes -> Achats, archive -->
+  <entry>
+    <category term='filter'></category>
+    <title>Achats - commandes</title>
+    <content></content>
+    <apps:property name='from' value='deliveroo.com'/>
+    <apps:property name='label' value='🛒 Achats'/>
+    <apps:property name='shouldArchive' value='true'/>
+    <apps:property name='shouldMarkAsRead' value='true'/>
+  </entry>
+
+  <!-- Services administratifs a garder visibles -> Admin -->
+  <entry>
+    <category term='filter'></category>
+    <title>Admin - services</title>
+    <content></content>
+    <apps:property name='from' value='impots.gouv.fr OR ameli.fr OR service-public.fr OR espaceclient@es.fr'/>
+    <apps:property name='label' value='🏠 Admin'/>
+  </entry>
+
+  <!-- Alertes de connexion (bruit administratif) -> Admin, archive -->
+  <entry>
+    <category term='filter'></category>
+    <title>Admin - alertes de connexion</title>
+    <content></content>
+    <apps:property name='from' value='notification.franceconnect.gouv.fr OR dile.interieur.gouv.fr OR regardclient.laposte.info'/>
+    <apps:property name='label' value='🏠 Admin'/>
+    <apps:property name='shouldArchive' value='true'/>
+    <apps:property name='shouldMarkAsRead' value='true'/>
+  </entry>
+
+</feed>
