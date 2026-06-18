@@ -24,7 +24,7 @@
         "operation": "getAll",
         "returnAll": true,
         "filters": {
-          "q": "newer_than:1d in:inbox"
+          "q": "newer_than:1d in:inbox -category:promotions -category:social"
         },
         "options": {}
       },
@@ -42,7 +42,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Concatene tous les mails recus en un seul bloc texte pour Claude.\nconst items = $input.all();\nif (items.length === 0) {\n  return [{ json: { prompt: null, count: 0 } }];\n}\nconst lignes = items.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst prompt = `Voici les ${items.length} mails recus dans les dernieres 24h. Fais un resume vocal court et clair en francais (a lire a voix haute par Alexa, donc pas de listes a puces, pas de markdown). Mentionne d'abord le nombre de mails, puis les 3 a 5 plus importants avec qui ecrit et pourquoi. Ignore les newsletters et notifications automatiques sauf si elles semblent importantes.\\n\\n${lignes}`;\nreturn [{ json: { prompt, count: items.length } }];"
+        "jsCode": "// Concatene tous les mails recus en un seul bloc texte pour Claude.\nconst items = $input.all();\nif (items.length === 0) {\n  return [{ json: { prompt: null, count: 0 } }];\n}\nconst lignes = items.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst prompt = `Tu es l'assistant matinal d'Alexis. Voici les mails recus dans les dernieres 24h. Redige un resume vocal court en francais, lu a voix haute par une enceinte : pas de markdown, pas de listes a puces, des phrases simples.\\n\\nNe retiens QUE ce qui compte vraiment : les messages ecrits par de vraies personnes qui s'adressent a lui (surtout ceux qui attendent une reponse) ; ce qui demande une action ou a une echeance (rdv, paiement, document a fournir, reponse attendue) ; les sujets pro, opportunites, contacts reseau, candidatures, clients ; l'argent (factures, paiements, banque, abonnements).\\n\\nIGNORE totalement, n'en parle pas du tout : les codes de securite ou 2FA et les notifications de connexion ; les newsletters, promotions et alertes emploi automatiques ; les accuses de reception et confirmations automatiques ; les notifications de reseaux sociaux.\\n\\nCommence par le nombre de mails vraiment importants (pas le total recu). Presente-les du plus important au moins important, en disant qui ecrit et ce qui est attendu de lui. Si rien n'est notable ce matin, dis-le simplement en une phrase, sans meubler.\\n\\nMails:\\n${lignes}`;\nreturn [{ json: { prompt, count: items.length } }];"
       },
       "id": "build-prompt",
       "name": "Construire le prompt",
