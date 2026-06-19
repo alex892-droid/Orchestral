@@ -7,13 +7,17 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 7 * * *"
+              "expression": "45 8 * * 1-5"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 6,0"
             }
           ]
         }
       },
       "id": "trigger-7h",
-      "name": "Tous les jours a 7h",
+      "name": "Bilan matinal",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -248,17 +252,6 @@
     }
   ],
   "connections": {
-    "Tous les jours a 7h": {
-      "main": [
-        [
-          {
-            "node": "Mails des dernieres 24h",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Mails des dernieres 24h": {
       "main": [
         [
@@ -331,6 +324,17 @@
         [
           {
             "node": "Construire le prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bilan matinal": {
+      "main": [
+        [
+          {
+            "node": "Mails des dernieres 24h",
             "type": "main",
             "index": 0
           }
