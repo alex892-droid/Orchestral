@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Combine meteo + agenda + mails 24h pour Claude.\nconst mails = $('Mails des dernieres 24h').all().filter(it => it.json && (it.json.id || it.json.snippet || it.json.subject || it.json.From || it.json.from));\nconst events = $('Agenda du jour').all().filter(it => it.json && (it.json.start || it.json.id || it.json.summary));\nconst lignesMails = mails.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst lignesAgenda = events.map((it) => {\n  const e = it.json;\n  const debut = (e.start && (e.start.dateTime || e.start.date)) || '';\n  const heure = e.start && e.start.dateTime ? debut.toString().slice(11, 16) : 'journee';\n  const titre = e.summary || '(sans titre)';\n  const lieu = e.location ? ` (${e.location})` : '';\n  return `- ${heure} : ${titre}${lieu}`;\n}).join('\\n');\nconst codes = {0:'ciel degage',1:'plutot ensoleille',2:'partiellement nuageux',3:'couvert',45:'brouillard',48:'brouillard givrant',51:'bruine legere',53:'bruine',55:'bruine forte',61:'pluie faible',63:'pluie',65:'pluie forte',66:'pluie verglacante',67:'pluie verglacante',71:'neige faible',73:'neige',75:'neige forte',77:'neige',80:'averses',81:'averses',82:'fortes averses',85:'averses de neige',86:'averses de neige',95:'orage',96:'orage avec grele',99:'orage avec grele'};\nconst md = $('Meteo du jour').first()?.json?.daily;\nlet meteo = 'indisponible';\nif (md) {\n  const desc = codes[md.weather_code?.[0]] || 'temps variable';\n  const tmin = Math.round(md.temperature_2m_min?.[0]);\n  const tmax = Math.round(md.temperature_2m_max?.[0]);\n  const pluie = md.precipitation_probability_max?.[0];\n  meteo = `${desc}, de ${tmin} a ${tmax} degres, risque de pluie ${pluie}%`;\n}\nif (mails.length === 0 && events.length === 0) {\n  const p = `Tu es l'assistant matinal d'Alexis. Dis bonjour, donne la meteo du jour a Strasbourg en une phrase (${meteo}), puis precise qu'il n'y a aucun rendez-vous ni mail notable ce matin. Court, en francais, pour une enceinte vocale, sans markdown.`;\n  return [{ json: { prompt: p, count: 1 } }];\n}\nconst prompt = `Tu es l'assistant matinal d'Alexis. Redige un briefing vocal court en francais, lu a voix haute par une enceinte : pas de markdown, pas de listes a puces, des phrases simples.\n\nDonne d'abord la meteo du jour a Strasbourg en une phrase. Puis l'agenda : annonce les rendez-vous d'aujourd'hui dans l'ordre, avec l'heure et l'intitule (s'il n'y en a aucun, dis-le). Enfin les mails importants.\n\nPour les mails, ne retiens QUE ce qui compte vraiment : vraies personnes qui s'adressent a lui (surtout si une reponse est attendue), actions ou echeances, sujets pro/opportunites/reseau/candidatures/clients, argent (factures, paiements, banque). IGNORE : codes 2FA et notifications de connexion, newsletters/promos/alertes emploi automatiques, accuses de reception, reseaux sociaux. Si aucun mail n'est notable, dis-le en une phrase.\n\nMeteo du jour (Strasbourg):\n${meteo}\n\nAgenda du jour:\n${lignesAgenda || 'Aucun rendez-vous.'}\n\nMails (24h):\n${lignesMails || 'Aucun mail.'}`;\nreturn [{ json: { prompt, count: mails.length + events.length } }];\n"
+        "jsCode": "// Combine meteo + agenda + mails 24h + telechargements Formaze pour Claude.\nconst mails = $('Mails des dernieres 24h').all().filter(it => it.json && (it.json.id || it.json.snippet || it.json.subject || it.json.From || it.json.from));\nconst events = $('Agenda du jour').all().filter(it => it.json && (it.json.start || it.json.id || it.json.summary));\nconst lignesMails = mails.map((it, i) => {\n  const m = it.json;\n  const from = m.from?.value?.[0]?.address || m.from?.text || m.From || 'inconnu';\n  const sujet = m.subject || m.Subject || '(sans objet)';\n  const apercu = (m.snippet || m.textPlain || '').toString().slice(0, 300);\n  return `${i + 1}. De: ${from}\\n   Objet: ${sujet}\\n   Apercu: ${apercu}`;\n}).join('\\n\\n');\nconst lignesAgenda = events.map((it) => {\n  const e = it.json;\n  const debut = (e.start && (e.start.dateTime || e.start.date)) || '';\n  const heure = e.start && e.start.dateTime ? debut.toString().slice(11, 16) : 'journee';\n  const titre = e.summary || '(sans titre)';\n  const lieu = e.location ? ` (${e.location})` : '';\n  return `- ${heure} : ${titre}${lieu}`;\n}).join('\\n');\nconst codes = {0:'ciel degage',1:'plutot ensoleille',2:'partiellement nuageux',3:'couvert',45:'brouillard',48:'brouillard givrant',51:'bruine legere',53:'bruine',55:'bruine forte',61:'pluie faible',63:'pluie',65:'pluie forte',66:'pluie verglacante',67:'pluie verglacante',71:'neige faible',73:'neige',75:'neige forte',77:'neige',80:'averses',81:'averses',82:'fortes averses',85:'averses de neige',86:'averses de neige',95:'orage',96:'orage avec grele',99:'orage avec grele'};\nconst md = $('Meteo du jour').first()?.json?.daily;\nlet meteo = 'indisponible';\nif (md) {\n  const desc = codes[md.weather_code?.[0]] || 'temps variable';\n  const tmin = Math.round(md.temperature_2m_min?.[0]);\n  const tmax = Math.round(md.temperature_2m_max?.[0]);\n  const pluie = md.precipitation_probability_max?.[0];\n  meteo = `${desc}, de ${tmin} a ${tmax} degres, risque de pluie ${pluie}%`;\n}\nconst nugetData = $('Telechargements Formaze').first()?.json?.data || [];\nconst dlFormaze = nugetData.filter(p => (p.id || '').toLowerCase().startsWith('formaze')).reduce((s, p) => s + (p.totalDownloads || 0), 0);\nif (mails.length === 0 && events.length === 0) {\n  const p = `Tu es l'assistant matinal d'Alexis. Dis bonjour, donne la meteo du jour a Strasbourg en une phrase (${meteo}), precise qu'il n'y a aucun rendez-vous ni mail notable ce matin, puis termine par : Formaze totalise ${dlFormaze} telechargements sur NuGet. Court, en francais, pour une enceinte vocale, sans markdown.`;\n  return [{ json: { prompt: p, count: 1 } }];\n}\nconst prompt = `Tu es l'assistant matinal d'Alexis. Redige un briefing vocal court en francais, lu a voix haute par une enceinte : pas de markdown, pas de listes a puces, des phrases simples.\n\nDonne d'abord la meteo du jour a Strasbourg en une phrase. Puis l'agenda : annonce les rendez-vous d'aujourd'hui dans l'ordre, avec l'heure et l'intitule (s'il n'y en a aucun, dis-le). Ensuite les mails importants. Termine par une phrase sur Formaze : ${dlFormaze} telechargements au total sur NuGet.\n\nPour les mails, ne retiens QUE ce qui compte vraiment : vraies personnes qui s'adressent a lui (surtout si une reponse est attendue), actions ou echeances, sujets pro/opportunites/reseau/candidatures/clients, argent (factures, paiements, banque). IGNORE : codes 2FA et notifications de connexion, newsletters/promos/alertes emploi automatiques, accuses de reception, reseaux sociaux. Si aucun mail n'est notable, dis-le en une phrase.\n\nMeteo du jour (Strasbourg):\n${meteo}\n\nAgenda du jour:\n${lignesAgenda || 'Aucun rendez-vous.'}\n\nMails (24h):\n${lignesMails || 'Aucun mail.'}\n\nTelechargements Formaze (total NuGet): ${dlFormaze}`;\nreturn [{ json: { prompt, count: mails.length + events.length } }];\n"
       },
       "id": "build-prompt",
       "name": "Construire le prompt",
@@ -218,6 +218,33 @@
         -448,
         320
       ]
+    },
+    {
+      "parameters": {
+        "url": "https://azuresearch-usnc.nuget.org/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "Formaze"
+            },
+            {
+              "name": "take",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-3333-4444-8555-666677778888",
+      "name": "Telechargements Formaze",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -260,
+        320
+      ]
     }
   ],
   "connections": {
@@ -289,6 +316,17 @@
       ]
     },
     "Meteo du jour": {
+      "main": [
+        [
+          {
+            "node": "Telechargements Formaze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telechargements Formaze": {
       "main": [
         [
           {
