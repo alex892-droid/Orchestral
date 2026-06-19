@@ -5,11 +5,7 @@
     {
       "parameters": {
         "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UCDPK_MTu3uTUFJXRVcTJcEw",
-        "pollTimes": {
-          "item": [
-            { "mode": "everyHour" }
-          ]
-        }
+        "pollTimes": { "item": [ { "mode": "everyHour" } ] }
       },
       "id": "rss-mcfly",
       "name": "McFly et Carlito (RSS)",
@@ -19,13 +15,70 @@
     },
     {
       "parameters": {
-        "jsCode": "// Construit le texte annonce a partir de la nouvelle video.\nconst titre = ($json.title || 'nouvelle video').toString();\nconst chaine = 'McFly et Carlito';\nconst speech = `Nouvelle video de ${chaine} : ${titre}`;\nreturn [{ json: { speech } }];"
+        "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UCWeg2Pkate69NFdBeuRFTAw",
+        "pollTimes": { "item": [ { "mode": "everyHour" } ] }
       },
-      "id": "msg",
-      "name": "Message",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [220, 0]
+      "id": "rss-squeezie",
+      "name": "Squeezie (RSS)",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 180]
+    },
+    {
+      "parameters": {
+        "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UC_yP2DpIgs5Y1uWC0T03Chw",
+        "pollTimes": { "item": [ { "mode": "everyHour" } ] }
+      },
+      "id": "rss-jdg",
+      "name": "JDG (RSS)",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 360]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "s1", "name": "speech", "value": "=Nouvelle video de McFly et Carlito : {{ $json.title }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-mcfly",
+      "name": "Texte McFly",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "s2", "name": "speech", "value": "=Nouvelle video de Squeezie : {{ $json.title }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-squeezie",
+      "name": "Texte Squeezie",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [260, 180]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "s3", "name": "speech", "value": "=Nouvelle video de Joueur du Grenier : {{ $json.title }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-jdg",
+      "name": "Texte JDG",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [260, 360]
     },
     {
       "parameters": {
@@ -40,16 +93,16 @@
       "name": "Annoncer sur Alexa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, 0]
+      "position": [520, 180]
     }
   ],
   "connections": {
-    "McFly et Carlito (RSS)": {
-      "main": [[{ "node": "Message", "type": "main", "index": 0 }]]
-    },
-    "Message": {
-      "main": [[{ "node": "Annoncer sur Alexa", "type": "main", "index": 0 }]]
-    }
+    "McFly et Carlito (RSS)": { "main": [[{ "node": "Texte McFly", "type": "main", "index": 0 }]] },
+    "Squeezie (RSS)": { "main": [[{ "node": "Texte Squeezie", "type": "main", "index": 0 }]] },
+    "JDG (RSS)": { "main": [[{ "node": "Texte JDG", "type": "main", "index": 0 }]] },
+    "Texte McFly": { "main": [[{ "node": "Annoncer sur Alexa", "type": "main", "index": 0 }]] },
+    "Texte Squeezie": { "main": [[{ "node": "Annoncer sur Alexa", "type": "main", "index": 0 }]] },
+    "Texte JDG": { "main": [[{ "node": "Annoncer sur Alexa", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" }
 }
